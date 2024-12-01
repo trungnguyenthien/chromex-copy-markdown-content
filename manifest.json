@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Web to Markdown",
+  "version": "1.0",
+  "description": "Extract web content and convert it to Markdown",
+  "permissions": ["activeTab"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "libs/jquery.min.js",
+        "libs/showdown.min.js",
+        "site_config.js",
+        "content.js"
+      ]
+    }
+  ]
+}
