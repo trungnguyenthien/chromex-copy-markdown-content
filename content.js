@@ -7,7 +7,7 @@
   if (siteConfig) {
     // Tạo button sử dụng jQuery
     const $button = $("<button>")
-      .text("Get Markdown Content")
+      .text("Copy Markdown Content") // Đổi button thành "Copy Markdown Content"
       .css({
         position: "fixed",
         bottom: "20px",
@@ -30,33 +30,21 @@
         }
       )
       .click(() => {
-        const { content, title } = siteConfig;
+        const contentHtml = document.documentElement.innerHTML; // Toàn bộ nội dung trang hiện tại
+        const result = parseContentMD(contentHtml);
 
-        // Lấy nội dung và tiêu đề sử dụng jQuery
-        const $titleElement = $(title);
-        const $contentElement = $(content);
+        let fullContentMD = `# ${result.title}\n\n${result.content}`;
+        console.log(fullContentMD);
 
-        if ($titleElement.length && $contentElement.length) {
-          const extractedTitle = $titleElement.text().trim(); // Sử dụng text() thay cho html()
-          const extractedContent = $contentElement.html().trim();
-          // TODO: Sử dụng Showdown để chuyển đổi HTML sang Markdown
-          let contentMd;
-          try {
-            const converter = new showdown.Converter(); // Tạo đối tượng converter
-            contentMd = converter.makeMarkdown(extractedContent, document); // Chuyển đổi HTML sang Markdown
-          } catch (error) {
-            console.error("Lỗi khi chuyển đổi sang Markdown:", error);
-            contentMd = "Lỗi khi chuyển đổi Markdown";
-          }
-          // // Log ra console
-          contentMd = updateHeaderLevel(contentMd)
-          contentMd = removeAllHtmlTag(contentMd)
-          contentMd = removeMultipleEndline(contentMd)
-          let fullContentMD = `# ${extractedTitle}\n${contentMd}`
-          console.log(fullContentMD)
-        } else {
-          alert("Không thể tìm thấy nội dung hoặc tiêu đề trên trang này.");
-        }
+        // TODO: Đưa nội dung fullContentMD vào clipboard
+        navigator.clipboard.writeText(fullContentMD)
+          .then(() => {
+            alert("Copied to clipboard success!"); // Hiện thông báo thành công
+          })
+          .catch((err) => {
+            console.error("Lỗi khi sao chép vào clipboard:", err);
+            alert("Copy to clipboard failed.");
+          });
       });
 
     // Thêm button vào body
@@ -124,4 +112,61 @@ function removeMultipleEndline(contentMd) {
    * Thay thế các đoạn xuống dòng liên tiếp (3 lần trở lên) bằng 2 lần xuống dòng (\n\n)
    */
   return contentMd.replace(/\n{3,}/g, "\n\n");
+}
+
+function parseContentMD(contentHtml, contentUrl = null) {
+  /**
+   * contentHtml: string chứa nội dung trang web ở HTML format.
+   * contentUrl: đường dẫn của trang web, nếu null thì lấy đường dẫn trang hiện tại.
+   * Trả về object: { url, title, content }
+   */
+
+  // Nếu contentUrl không được cung cấp, lấy đường dẫn trang hiện tại
+  const currentUrl = contentUrl || window.location.href;
+
+  // Tìm config phù hợp với URL hiện tại
+  const siteConfig = siteConfigs.find(config => currentUrl.startsWith(config.url));
+
+  if (!siteConfig) {
+    console.error("Không tìm thấy cấu hình cho URL:", currentUrl);
+    return { url: currentUrl, title: null, content: null };
+  }
+
+  const { content, title } = siteConfig;
+
+  // Tạo DOM giả lập từ contentHtml
+  const $html = $("<div>").html(contentHtml);
+
+  // Lấy nội dung và tiêu đề sử dụng jQuery
+  const $titleElement = $html.find(title);
+  const $contentElement = $html.find(content);
+
+  if ($titleElement.length && $contentElement.length) {
+    const extractedTitle = $titleElement.text().trim(); // Sử dụng text() thay cho html()
+    const extractedContent = $contentElement.html().trim();
+
+    // Sử dụng Showdown để chuyển đổi HTML sang Markdown
+    let contentMd;
+    try {
+      const converter = new showdown.Converter(); // Tạo đối tượng converter
+      contentMd = converter.makeMarkdown(extractedContent, document); // Chuyển đổi HTML sang Markdown
+    } catch (error) {
+      console.error("Lỗi khi chuyển đổi sang Markdown:", error);
+      contentMd = "Lỗi khi chuyển đổi Markdown";
+    }
+
+    // Gọi các hàm xử lý Markdown
+    contentMd = updateHeaderLevel(contentMd);
+    contentMd = removeAllHtmlTag(contentMd);
+    contentMd = removeMultipleEndline(contentMd);
+
+    return {
+      url: currentUrl,
+      title: extractedTitle,
+      content: contentMd
+    };
+  } else {
+    console.error("Không thể tìm thấy nội dung hoặc tiêu đề trên trang này.");
+    return { url: currentUrl, title: null, content: null };
+  }
 }
