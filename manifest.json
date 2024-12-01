@@ -12,6 +12,7 @@
         "libs/jquery.min.js",
         "libs/showdown.min.js",
         "site_config.js",
+        "libs/common.js",
         "content.js"
       ]
     }

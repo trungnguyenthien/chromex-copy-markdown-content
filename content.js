@@ -35,16 +35,14 @@
 
         let fullContentMD = `# ${result.title}\n\n${result.content}`;
         console.log(fullContentMD);
-
-        // TODO: Đưa nội dung fullContentMD vào clipboard
-        navigator.clipboard.writeText(fullContentMD)
-          .then(() => {
-            alert("Copied to clipboard success!"); // Hiện thông báo thành công
-          })
-          .catch((err) => {
-            console.error("Lỗi khi sao chép vào clipboard:", err);
+        // Sử dụng hàm copyToClipboard
+        copyToClipboard(fullContentMD).then((success) => {
+          if (success) {
+            alert("Copied to clipboard success!");
+          } else {
             alert("Copy to clipboard failed.");
-          });
+          }
+        });
       });
 
     // Thêm button vào body
@@ -168,5 +166,15 @@ function parseContentMD(contentHtml, contentUrl = null) {
   } else {
     console.error("Không thể tìm thấy nội dung hoặc tiêu đề trên trang này.");
     return { url: currentUrl, title: null, content: null };
+  }
+}
+
+async function copyToClipboard(content) {
+  try {
+    await navigator.clipboard.writeText(content);
+    return true; // Sao chép thành công
+  } catch (err) {
+    console.error("Lỗi khi sao chép vào clipboard:", err);
+    return false; // Sao chép thất bại
   }
 }
