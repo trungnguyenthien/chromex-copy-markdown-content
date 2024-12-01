@@ -50,6 +50,8 @@
           }
           // // Log ra console
           contentMd = updateHeaderLevel(contentMd)
+          contentMd = removeAllHtmlTag(contentMd)
+          contentMd = removeMultipleEndline(contentMd)
           let fullContentMD = `# ${extractedTitle}\n${contentMd}`
           console.log(fullContentMD)
         } else {
@@ -99,4 +101,27 @@ function updateHeaderLevel(contentMd) {
 
   // Ghép lại các dòng thành một chuỗi Markdown
   return updatedLines.join("\n");
+}
+
+function removeAllHtmlTag(contentMd) {
+  // Hàm xử lý chuỗi Markdown
+  return contentMd.replace(/<[^>]*>/g, (match) => {
+    // Xử lý đặc biệt cho thẻ <img>
+    const imgMatch = match.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/);
+    if (imgMatch) {
+      // Lấy URL từ thuộc tính src
+      const src = imgMatch[1];
+      return `<img src="${src}" width="60%">`; // Thay thế bằng định dạng mới
+    }
+
+    // Loại bỏ các thẻ HTML khác
+    return "";
+  });
+}
+
+function removeMultipleEndline(contentMd) {
+  /**
+   * Thay thế các đoạn xuống dòng liên tiếp (3 lần trở lên) bằng 2 lần xuống dòng (\n\n)
+   */
+  return contentMd.replace(/\n{3,}/g, "\n\n");
 }
