@@ -1,7 +1,7 @@
 // Tệp: libs/common.js
 
 // Cập nhật cấp độ tiêu đề Markdown
-export function updateHeaderLevel(contentMd) {
+function updateHeaderLevel(contentMd) {
   const lines = contentMd.split("\n");
   const updatedLines = [];
   let minHeaderLevel = Infinity;
@@ -30,7 +30,7 @@ export function updateHeaderLevel(contentMd) {
 }
 
 // Loại bỏ các thẻ HTML khỏi nội dung Markdown
-export function removeAllHtmlTag(contentMd) {
+function removeAllHtmlTag(contentMd) {
   return contentMd.replace(/<[^>]*>/g, (match) => {
     const imgMatch = match.match(/<img[^>]*src=["']([^"']+)["'][^>]*>/);
     if (imgMatch) {
@@ -42,12 +42,12 @@ export function removeAllHtmlTag(contentMd) {
 }
 
 // Loại bỏ các đoạn xuống dòng liên tiếp (3 lần trở lên)
-export function removeMultipleEndline(contentMd) {
+function removeMultipleEndline(contentMd) {
   return contentMd.replace(/\n{3,}/g, "\n\n");
 }
 
 // Phân tích nội dung HTML và chuyển đổi sang Markdown
-export function parseContentMD(contentHtml, contentUrl = null) {
+function parseContentMD(contentHtml, contentUrl = null) {
   const currentUrl = contentUrl || window.location.href;
   const siteConfig = siteConfigs.find(config => currentUrl.startsWith(config.url));
 
@@ -90,7 +90,7 @@ export function parseContentMD(contentHtml, contentUrl = null) {
 }
 
 // Sao chép nội dung vào clipboard
-export async function copyToClipboard(content) {
+async function copyToClipboard(content) {
   try {
     await navigator.clipboard.writeText(content);
     return true;
