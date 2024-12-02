@@ -1,5 +1,60 @@
 // Tệp: libs/common.js
 
+// Phân tích nội dung HTML và chuyển đổi sang Markdown
+function parseContentMD(contentHtml, contentUrl = null) {
+  const currentUrl = contentUrl || window.location.href;
+  const siteConfig = siteConfigs.find(config => currentUrl.startsWith(config.url));
+
+  if (!siteConfig) {
+    console.error("Không tìm thấy cấu hình cho URL:", currentUrl);
+    return { url: currentUrl, title: null, content: null };
+  }
+
+  const { content, title } = siteConfig;
+  const $html = $("<div>").html(contentHtml);
+  const $titleElement = $html.find(title);
+  const $contentElement = $html.find(content);
+
+  if ($titleElement.length && $contentElement.length) {
+    const extractedTitle = $titleElement.text().trim();
+    let extractedContent = $contentElement.html().trim();
+    extractedContent = unwrapSpanInCode(extractedContent)
+    extractedContent = removeHtmlTag(extractedContent)
+    extractedContent = removeAttr(extractedContent)
+    extractedContent = removeDiv(extractedContent)
+
+    let contentMd;
+    try {
+      const converter = new showdown.Converter({
+        ghCodeBlocks: true,          // Hỗ trợ khối mã dạng GitHub-style (```)
+        omitExtraWLInCodeBlocks: false,
+        simpleLineBreaks: true,      // Hỗ trợ xuống dòng đơn giản
+        noHeaderId: true,            // Không tự thêm ID vào tiêu đề
+        tables: true,                // Hỗ trợ bảng
+        strikethrough: true,         // Hỗ trợ gạch ngang
+        tasklists: true,             // Hỗ trợ danh sách công việc
+      });
+      contentMd = converter.makeMarkdown(extractedContent);
+    } catch (error) {
+      console.error("Lỗi khi chuyển đổi sang Markdown:", error);
+      contentMd = "Lỗi khi chuyển đổi Markdown";
+    }
+
+    contentMd = updateHeaderLevel(contentMd);
+    // contentMd = removeAllHtmlTag(contentMd);
+    contentMd = removeMultipleEndline(contentMd);
+
+    return {
+      url: currentUrl,
+      title: extractedTitle,
+      content: contentMd
+    };
+  } else {
+    console.error("Không thể tìm thấy nội dung hoặc tiêu đề trên trang này.");
+    return { url: currentUrl, title: null, content: null };
+  }
+}
+
 // Cập nhật cấp độ tiêu đề Markdown
 function updateHeaderLevel(contentMd) {
   const lines = contentMd.split("\n");
@@ -92,61 +147,6 @@ function removeAllHtmlTag(contentMd) {
 // Loại bỏ các đoạn xuống dòng liên tiếp (3 lần trở lên)
 function removeMultipleEndline(contentMd) {
   return contentMd.replace(/\n{3,}/g, "\n\n");
-}
-
-// Phân tích nội dung HTML và chuyển đổi sang Markdown
-function parseContentMD(contentHtml, contentUrl = null) {
-  const currentUrl = contentUrl || window.location.href;
-  const siteConfig = siteConfigs.find(config => currentUrl.startsWith(config.url));
-
-  if (!siteConfig) {
-    console.error("Không tìm thấy cấu hình cho URL:", currentUrl);
-    return { url: currentUrl, title: null, content: null };
-  }
-
-  const { content, title } = siteConfig;
-  const $html = $("<div>").html(contentHtml);
-  const $titleElement = $html.find(title);
-  const $contentElement = $html.find(content);
-
-  if ($titleElement.length && $contentElement.length) {
-    const extractedTitle = $titleElement.text().trim();
-    let extractedContent = $contentElement.html().trim();
-    extractedContent = unwrapSpanInCode(extractedContent)
-    extractedContent = removeHtmlTag(extractedContent)
-    extractedContent = removeAttr(extractedContent)
-    extractedContent = removeDiv(extractedContent)
-    
-    let contentMd;
-    try {
-      const converter = new showdown.Converter({
-        ghCodeBlocks: true,          // Hỗ trợ khối mã dạng GitHub-style (```)
-        omitExtraWLInCodeBlocks: false,
-        simpleLineBreaks: true,      // Hỗ trợ xuống dòng đơn giản
-        noHeaderId: true,            // Không tự thêm ID vào tiêu đề
-        tables: true,                // Hỗ trợ bảng
-        strikethrough: true,         // Hỗ trợ gạch ngang
-        tasklists: true,              // Hỗ trợ danh sách công việc
-      });
-      contentMd = converter.makeMarkdown(extractedContent);
-    } catch (error) {
-      console.error("Lỗi khi chuyển đổi sang Markdown:", error);
-      contentMd = "Lỗi khi chuyển đổi Markdown";
-    }
-
-    contentMd = updateHeaderLevel(contentMd);
-    // contentMd = removeAllHtmlTag(contentMd);
-    contentMd = removeMultipleEndline(contentMd);
-
-    return {
-      url: currentUrl,
-      title: extractedTitle,
-      content: contentMd
-    };
-  } else {
-    console.error("Không thể tìm thấy nội dung hoặc tiêu đề trên trang này.");
-    return { url: currentUrl, title: null, content: null };
-  }
 }
 
 // Sao chép nội dung vào clipboard
