@@ -200,7 +200,7 @@ function removeAttr(contentHtml) {
 function unwrapSpanInCode(contentHtml) {
   /**
    * contentHtml: string có định dạng HTML.
-   * Unwrap tất cả các tag trong các thẻ <code>.
+   * Unwrap tất cả các tag <span> trong các thẻ <code>.
    */
   // Tạo DOM parser để xử lý HTML
   const parser = new DOMParser();
@@ -211,8 +211,16 @@ function unwrapSpanInCode(contentHtml) {
 
   // Duyệt qua từng thẻ <code>
   codeElements.forEach((codeElement) => {
-    // Thay thế nội dung HTML của <code> bằng nội dung text
-    codeElement.innerHTML = decodeHtmlEntities(codeElement.textContent);
+    // Lấy tất cả các thẻ <span> bên trong <code>
+    const spanElements = codeElement.querySelectorAll("span");
+
+    // Unwrap từng <span>
+    spanElements.forEach((spanElement) => {
+      while (spanElement.firstChild) {
+        spanElement.parentNode.insertBefore(spanElement.firstChild, spanElement);
+      }
+      spanElement.remove(); // Xóa thẻ <span>
+    });
   });
 
   // Trả về HTML đã xử lý
@@ -249,27 +257,3 @@ function removeDiv(contentHtml) {
   // Trả về HTML đã xử lý từ body
   return doc.body.innerHTML;
 }
-
-function decodeHtmlEntities(content) {
-  /**
-   * Giải mã các HTML entities trong các thẻ <code>.
-   * content: string chứa các ký tự HTML entities.
-   */
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(content, "text/html");
-
-  // Lấy tất cả các thẻ <code>
-  const codeElements = doc.body.querySelectorAll("code");
-
-  // Duyệt qua từng thẻ <code> và giải mã nội dung bên trong
-  codeElements.forEach(code => {
-    const decodedContent = new DOMParser()
-      .parseFromString(code.innerHTML, "text/html")
-      .documentElement.textContent;
-    code.innerHTML = decodedContent;
-  });
-
-  // Trả về toàn bộ nội dung HTML đã xử lý
-  return doc.documentElement.outerHTML;
-}
-
