@@ -23,23 +23,7 @@ function parseContentMD(contentHtml, contentUrl = null) {
     extractedContent = removeAttr(extractedContent)
     extractedContent = removeDiv(extractedContent)
 
-    let contentMd;
-    try {
-      const converter = new showdown.Converter({
-        ghCodeBlocks: true,          // Hỗ trợ khối mã dạng GitHub-style (```)
-        omitExtraWLInCodeBlocks: false,
-        simpleLineBreaks: true,      // Hỗ trợ xuống dòng đơn giản
-        noHeaderId: true,            // Không tự thêm ID vào tiêu đề
-        tables: true,                // Hỗ trợ bảng
-        strikethrough: true,         // Hỗ trợ gạch ngang
-        tasklists: true,             // Hỗ trợ danh sách công việc
-      });
-      contentMd = converter.makeMarkdown(extractedContent);
-    } catch (error) {
-      console.error("Lỗi khi chuyển đổi sang Markdown:", error);
-      contentMd = "Lỗi khi chuyển đổi Markdown";
-    }
-
+    let contentMd = convertToMarkdown(extractedContent)
     contentMd = updateHeaderLevel(contentMd);
     // contentMd = removeAllHtmlTag(contentMd);
     contentMd = removeMultipleEndline(contentMd);
@@ -257,3 +241,25 @@ function removeDiv(contentHtml) {
   // Trả về HTML đã xử lý từ body
   return doc.body.innerHTML;
 }
+
+function convertToMarkdown(htmlString) {
+  if (!htmlString || typeof htmlString !== 'string') {
+    console.error('htmlString không hợp lệ');
+    return '';
+  }
+
+  const turndownService = new TurndownService();
+
+  // Tùy chỉnh quy tắc chuyển đổi cho các thẻ tiêu đề
+  turndownService.addRule('headers', {
+    filter: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+    replacement: function (content, node) {
+      const level = node.tagName.charAt(1); // Lấy số từ h1, h2, ...
+      return `${'#'.repeat(level)} ${content}\n`;
+    }
+  });
+
+  const markdown = turndownService.turndown(htmlString);
+  return markdown;
+}
+
