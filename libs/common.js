@@ -243,6 +243,7 @@ function removeDiv(contentHtml) {
 }
 
 function convertToMarkdown(htmlString) {
+  //TODO: Vì sao có ký tự xuống hàng sau {CODE} như thế này ```{CODE}\n```
   if (!htmlString || typeof htmlString !== 'string') {
     console.error('htmlString không hợp lệ');
     return '';
@@ -259,7 +260,16 @@ function convertToMarkdown(htmlString) {
     }
   });
 
+  // Tùy chỉnh quy tắc chuyển đổi cho các block code
+  turndownService.addRule('codeBlocks', {
+    filter: function (node) {
+      return node.nodeName === 'PRE';
+    },
+    replacement: function (content) {
+      return `\n\`\`\`\n${content}\n\`\`\`\n`;
+    }
+  });
+
   const markdown = turndownService.turndown(htmlString);
   return markdown;
 }
-
